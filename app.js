@@ -82,6 +82,31 @@ app.get("/posting/:postId", (req, res) => __awaiter(void 0, void 0, void 0, func
         res.status(500).json({ error: "Internal server error" });
     }
 }));
+app.put("/posting/:postId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { postId } = req.params;
+    console.log(req.body);
+    try {
+        const posting = yield posting_1.PostingModel.findById(postId);
+        if (!posting) {
+            return res.status(404).json({ error: "Posting not found" });
+        }
+        // if (!posting.author.equals(req.user._id)) {
+        //   req.flash("error", "You do not have the permission to do that!.");
+        //
+        // }
+        const updatedPost = yield posting_1.PostingModel.findByIdAndUpdate(postId, Object.assign(Object.assign({}, req.body), { createdAt: new Date() }), { new: true });
+        if (updatedPost) {
+            return res.json(updatedPost);
+        }
+        else {
+            return res.status(500).json({ error: "Failed to update posting" });
+        }
+    }
+    catch (error) {
+        console.error("Error searching postings:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}));
 app.post("/newPosting", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const newPosting = new posting_1.PostingModel(req.body);
@@ -90,7 +115,7 @@ app.post("/newPosting", (req, res) => __awaiter(void 0, void 0, void 0, function
     }
     catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Internal Server Error' });
+        res.status(500).json({ message: "Internal Server Error" });
     }
 }));
 app.get("*", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
