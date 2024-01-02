@@ -63,7 +63,6 @@ app.get("/search", async (req: Request, res: Response) => {
 
 app.get("/posting/:postId", async (req: Request, res: Response) => {
   const { postId } = req.params;
-
   try {
     const searchResult = await PostingModel.findById(postId)
       .populate({
@@ -79,14 +78,17 @@ app.get("/posting/:postId", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/post", async (req: Request, res: Response) => {
+app.post("/newPosting", async (req: Request, res: Response) => {
   try {
-    const newPost = new PostingModel(req.body.posting);
-    await newPost.save();
-    res.redirect(`/posting/${newPost._id}`);
+    const newPosting = new PostingModel(req.body);
+    
+
+    const savedPosting = await newPosting.save();
+
+    res.status(201).json(savedPosting);
   } catch (error) {
-    console.error("Error posting a new post:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 

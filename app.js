@@ -82,16 +82,15 @@ app.get("/posting/:postId", (req, res) => __awaiter(void 0, void 0, void 0, func
         res.status(500).json({ error: "Internal server error" });
     }
 }));
-app.post("/post", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/newPosting", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const latestPostings = yield posting_1.PostingModel.find()
-            .sort({ createdAt: -1 })
-            .limit(8);
-        res.json(latestPostings);
+        const newPosting = new posting_1.PostingModel(req.body);
+        const savedPosting = yield newPosting.save();
+        res.status(201).json(savedPosting);
     }
     catch (error) {
-        console.error("Error fetching latest postings:", error);
-        res.status(500).json({ error: "Internal server error" });
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
     }
 }));
 app.get("*", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

@@ -16,7 +16,7 @@ interface IPosting extends Document {
   imageSrc: string[];
   author: PopulatedDoc<IUser & Document>;
   createdAt: Date;
-  bggData?: [{ bggIdx: string; name: string }];
+  bggData?: [{ id: string; name: string; year?: string }];
 }
 
 const postingSchema = new Schema<IPosting>({
@@ -31,8 +31,16 @@ const postingSchema = new Schema<IPosting>({
     ref: "User",
   },
   createdAt: { type: Date, default: Date.now },
-  bggData: [{ bggIdx: String, name: String }],
+  bggData: [{ id: String, name: String, year: String }],
 });
+
+postingSchema.pre<IPosting>('save', function (next) {
+  if (!this.createdAt) {
+    this.createdAt = new Date();
+  }
+  next();
+});
+
 
 const PostingModel: Model<IPosting> = mongoose.model("Posting", postingSchema);
 

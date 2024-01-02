@@ -37,7 +37,13 @@ const postingSchema = new mongoose_1.Schema({
         ref: "User",
     },
     createdAt: { type: Date, default: Date.now },
-    bggLink: { bggIdx: String, name: String },
+    bggData: [{ id: String, name: String, year: String }],
+});
+postingSchema.pre('save', function (next) {
+    if (!this.createdAt) {
+        this.createdAt = new Date();
+    }
+    next();
 });
 const PostingModel = mongoose_1.default.model("Posting", postingSchema);
 exports.PostingModel = PostingModel;
