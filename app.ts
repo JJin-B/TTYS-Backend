@@ -61,6 +61,19 @@ app.get("/search", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/posting/new", async (req: Request, res: Response) => {
+  try {
+    const newPosting = new PostingModel(req.body);
+
+    const savedPosting = await newPosting.save();
+
+    res.status(201).json(savedPosting);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 app.get("/posting/:postId", async (req: Request, res: Response) => {
   const { postId } = req.params;
   try {
@@ -109,16 +122,13 @@ app.put("/posting/:postId", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/newPosting", async (req: Request, res: Response) => {
+app.delete("/posting/:postId", async (req: Request, res: Response) => {
+  const { postId } = req.params;
   try {
-    const newPosting = new PostingModel(req.body);
-
-    const savedPosting = await newPosting.save();
-
-    res.status(201).json(savedPosting);
+    const deletedPost = await PostingModel.findByIdAndDelete(postId);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("Error searching postings:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
