@@ -14,6 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
+// import LocalStrategy from 'passport-local';
+// import session from 'express-session';
 const posting_1 = require("./models/posting");
 const user_1 = require("./models/user");
 const cors_1 = __importDefault(require("cors"));
@@ -135,8 +137,11 @@ app.post("/user/register", (req, res) => __awaiter(void 0, void 0, void 0, funct
         if (isExistingUser) {
             return res.json("Existing User");
         }
+        userParams.username = userParams.email;
         const user = new user_1.UserModel(userParams);
+        console.log(user);
         const newUser = yield user.save();
+        console.log(newUser);
         return res.json(newUser);
     }
     catch (error) {

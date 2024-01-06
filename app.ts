@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import mongoose from "mongoose";
-import LocalStrategy from 'passport-local';
-import session from 'express-session';
+// import LocalStrategy from 'passport-local';
+// import session from 'express-session';
 
 import { PostingModel, IPosting } from "./models/posting";
 import { UserModel } from "./models/user";
@@ -144,8 +144,12 @@ app.post("/user/register", async (req: Request, res: Response) => {
       return res.json("Existing User");
     }
 
+    userParams.username = userParams.email;
+
     const user = new UserModel(userParams);
+    console.log(user);
     const newUser = await user.save();
+    console.log(newUser);
 
     return res.json(newUser);
   } catch (error) {
