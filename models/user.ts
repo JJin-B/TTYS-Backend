@@ -5,6 +5,7 @@ interface IUser extends Document {
   name: string;
   password: string;
   email: string;
+  username: string;
   interests: string[];
   userSetting: {};
   isEmailVerified: boolean;
@@ -24,6 +25,11 @@ const userSchema: Schema = new Schema({
     required: true,
     unique: true,
   },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   interests: {
     type: [String],
     default: [],
@@ -36,7 +42,7 @@ const userSchema: Schema = new Schema({
   },
 });
 
-userSchema.plugin(passportLocalMongoose, { usernameField: "email" });
+userSchema.plugin(passportLocalMongoose);
 
 const UserModel = mongoose.model<IUser>("User", userSchema);
 

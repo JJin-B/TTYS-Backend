@@ -32,6 +32,7 @@ const seedDB = async (): Promise<void> => {
   const newUser = new UserModel({
     _id: userId,
     email: "intblejin@gmail.com",
+    username: "intblejin@gmail.com",
     name: "Jin Bae",
     password: "abc",
   });

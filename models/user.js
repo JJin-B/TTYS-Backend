@@ -43,6 +43,11 @@ const userSchema = new mongoose_1.Schema({
         required: true,
         unique: true,
     },
+    username: {
+        type: String,
+        required: true,
+        unique: true,
+    },
     interests: {
         type: [String],
         default: [],
@@ -53,6 +58,6 @@ const userSchema = new mongoose_1.Schema({
         default: true,
     },
 });
-userSchema.plugin(passport_local_mongoose_1.default, { usernameField: "email" });
+userSchema.plugin(passport_local_mongoose_1.default);
 const UserModel = mongoose_1.default.model("User", userSchema);
 exports.UserModel = UserModel;

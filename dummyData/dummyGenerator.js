@@ -37,6 +37,7 @@ const seedDB = () => __awaiter(void 0, void 0, void 0, function* () {
     const newUser = new user_1.UserModel({
         _id: userId,
         email: "intblejin@gmail.com",
+        username: "intblejin@gmail.com",
         name: "Jin Bae",
         password: "abc",
     });
