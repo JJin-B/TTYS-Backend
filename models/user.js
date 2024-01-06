@@ -30,14 +30,29 @@ exports.UserModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const passport_local_mongoose_1 = __importDefault(require("passport-local-mongoose"));
 const userSchema = new mongoose_1.Schema({
-    name: String,
+    name: {
+        type: String,
+        required: true,
+    },
+    password: {
+        type: String,
+        required: true,
+    },
     email: {
         type: String,
         required: true,
         unique: true,
     },
-    interests: [String],
+    interests: {
+        type: [String],
+        default: [],
+    },
+    userSetting: {},
+    isEmailVerified: {
+        type: Boolean,
+        default: true,
+    },
 });
-userSchema.plugin(passport_local_mongoose_1.default);
+userSchema.plugin(passport_local_mongoose_1.default, { usernameField: "email" });
 const UserModel = mongoose_1.default.model("User", userSchema);
 exports.UserModel = UserModel;

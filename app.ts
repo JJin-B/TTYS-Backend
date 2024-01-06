@@ -1,5 +1,8 @@
 import express, { Request, Response } from "express";
 import mongoose from "mongoose";
+import LocalStrategy from 'passport-local';
+import session from 'express-session';
+
 import { PostingModel, IPosting } from "./models/posting";
 import { UserModel } from "./models/user";
 import cors from "cors";
@@ -131,6 +134,46 @@ app.delete("/posting/:postId", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+app.post("/user/register", async (req: Request, res: Response) => {
+  const userParams = req.body;
+
+  try {
+    const isExistingUser = await UserModel.findOne({ email: userParams.email });
+    if (isExistingUser) {
+      return res.json("Existing User");
+    }
+
+    const user = new UserModel(userParams);
+    const newUser = await user.save();
+
+    return res.json(newUser);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error });
+  }
+});
+
+app.post("/user/signin", async (req: Request, res: Response) => {
+  const userParams = req.body;
+
+  try {
+    const isValidUser = await UserModel.findOne({
+      email: userParams.email,
+      password: userParams.password,
+    });
+    if (!isValidUser) {
+      return res.json("Not valid User");
+    }
+
+    return res.json(isValidUser);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error });
+  }
+});
+
+app.put("/user");
 
 app.get("*", async (req: Request, res: Response) => {
   res.send("Wrong Page!");

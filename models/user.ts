@@ -3,21 +3,40 @@ import passportLocalMongoose from "passport-local-mongoose";
 
 interface IUser extends Document {
   name: string;
+  password: string;
   email: string;
   interests: string[];
+  userSetting: {};
+  isEmailVerified: boolean;
 }
 
 const userSchema: Schema = new Schema({
-  name: String,
+  name: {
+    type: String,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
   email: {
     type: String,
     required: true,
     unique: true,
   },
-  interests: [String],
+  interests: {
+    type: [String],
+    default: [],
+  },
+  userSetting: {},
+
+  isEmailVerified: {
+    type: Boolean,
+    default: true,
+  },
 });
 
-userSchema.plugin(passportLocalMongoose);
+userSchema.plugin(passportLocalMongoose, { usernameField: "email" });
 
 const UserModel = mongoose.model<IUser>("User", userSchema);
 

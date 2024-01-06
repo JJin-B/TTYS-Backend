@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const boardgames_1 = require("./boardgames");
 const posting_1 = require("../models/posting");
+const user_1 = require("../models/user");
 mongoose_1.default.connect("mongodb://localhost:27017/tradeyourshelfofshame");
 const db = mongoose_1.default.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
@@ -31,7 +32,17 @@ const generateRandomDate = (start, end) => {
     return new Date(randomTime);
 };
 const seedDB = () => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("deletion starts");
+    console.log("User Model Reset");
+    yield user_1.UserModel.deleteMany({});
+    const newUser = new user_1.UserModel({
+        _id: userId,
+        email: "intblejin@gmail.com",
+        name: "Jin Bae",
+        password: "abc",
+    });
+    yield newUser.save();
+    console.log("User reset done");
+    console.log("Posting Model deletion starts");
     yield posting_1.PostingModel.deleteMany({});
     console.log("deletion ends & dummydata generation starts");
     for (let i = 0; i < 200; i++) {

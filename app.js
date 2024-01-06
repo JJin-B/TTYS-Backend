@@ -65,6 +65,17 @@ app.get("/search", (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         res.status(500).json({ error: "Internal server error" });
     }
 }));
+app.post("/posting/new", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const newPosting = new posting_1.PostingModel(req.body);
+        const savedPosting = yield newPosting.save();
+        res.status(201).json(savedPosting);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}));
 app.get("/posting/:postId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { postId } = req.params;
     try {
@@ -107,17 +118,50 @@ app.put("/posting/:postId", (req, res) => __awaiter(void 0, void 0, void 0, func
         res.status(500).json({ error: "Internal server error" });
     }
 }));
-app.post("/newPosting", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.delete("/posting/:postId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { postId } = req.params;
     try {
-        const newPosting = new posting_1.PostingModel(req.body);
-        const savedPosting = yield newPosting.save();
-        res.status(201).json(savedPosting);
+        const deletedPost = yield posting_1.PostingModel.findByIdAndDelete(postId);
     }
     catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal Server Error" });
+        console.error("Error searching postings:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
 }));
+app.post("/user/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userParams = req.body;
+    try {
+        const isExistingUser = yield user_1.UserModel.findOne({ email: userParams.email });
+        if (isExistingUser) {
+            return res.json("Existing User");
+        }
+        const user = new user_1.UserModel(userParams);
+        const newUser = yield user.save();
+        return res.json(newUser);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error });
+    }
+}));
+app.post("/user/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userParams = req.body;
+    try {
+        const isValidUser = yield user_1.UserModel.findOne({
+            email: userParams.email,
+            password: userParams.password,
+        });
+        if (!isValidUser) {
+            return res.json("Not valid User");
+        }
+        return res.json(isValidUser);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error });
+    }
+}));
+app.put("/user");
 app.get("*", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("Wrong Page!");
 }));

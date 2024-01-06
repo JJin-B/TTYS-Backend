@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { bgNames, bgDescs, imgUrls } from "./boardgames";
 import { PostingModel, IPosting } from "../models/posting";
+import { UserModel } from "../models/user";
 
 mongoose.connect("mongodb://localhost:27017/tradeyourshelfofshame");
 const db = mongoose.connection;
@@ -26,7 +27,18 @@ const generateRandomDate = (start: Date, end: Date): Date => {
 };
 
 const seedDB = async (): Promise<void> => {
-  console.log("deletion starts");
+  console.log("User Model Reset");
+  await UserModel.deleteMany({});
+  const newUser = new UserModel({
+    _id: userId,
+    email: "intblejin@gmail.com",
+    name: "Jin Bae",
+    password: "abc",
+  });
+  await newUser.save();
+  console.log("User reset done");
+
+  console.log("Posting Model deletion starts");
   await PostingModel.deleteMany({});
   console.log("deletion ends & dummydata generation starts");
 
