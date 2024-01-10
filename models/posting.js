@@ -37,9 +37,15 @@ const postingSchema = new mongoose_1.Schema({
         ref: "User",
     },
     createdAt: { type: Date, default: Date.now },
-    bggData: [{ id: String, name: String, year: String }],
+    bggData: [
+        {
+            id: { type: String, required: true },
+            name: { type: String, required: true },
+            year: String,
+        },
+    ],
 });
-postingSchema.pre('save', function (next) {
+postingSchema.pre("save", function (next) {
     if (!this.createdAt) {
         this.createdAt = new Date();
     }

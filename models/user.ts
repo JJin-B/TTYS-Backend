@@ -1,12 +1,17 @@
 import mongoose, { Schema, Document } from "mongoose";
 import passportLocalMongoose from "passport-local-mongoose";
+import { BggData } from "./posting";
+
+interface UserInterest extends BggData {
+  interestType: "sell" | "buy";
+}
 
 interface IUser extends Document {
   name: string;
   password: string;
   email: string;
   username: string;
-  interests: string[];
+  interests?: UserInterest[];
   userSetting: {};
   isEmailVerified: boolean;
 }
@@ -31,7 +36,14 @@ const userSchema: Schema = new Schema({
     unique: true,
   },
   interests: {
-    type: [String],
+    type: [
+      {
+        interestType: { type: String, required: true, enum: ["sell", "buy"] },
+        id: { type: String, required: true },
+        name: { type: String, required: true },
+        year: String,
+      },
+    ],
     default: [],
   },
   userSetting: {},

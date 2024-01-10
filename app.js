@@ -45,7 +45,7 @@ app.get("/latest-postings", (req, res) => __awaiter(void 0, void 0, void 0, func
 }));
 // Route to get postings based on type and title search
 app.get("/search", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { type, q, page } = req.query;
+    const { type, q, author_id, page, viewAll } = req.query;
     const itemsPerPage = 10;
     try {
         const query = {};
@@ -55,11 +55,32 @@ app.get("/search", (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         if (q) {
             query.title = { $regex: q, $options: "i" }; // Case-insensitive search
         }
+        if (author_id) {
+            try {
+                query.author = new mongoose_1.default.Types.ObjectId(String(author_id));
+            }
+            catch (error) {
+                console.error("Invalid author_id:", error);
+                res.status(400).json({ error: "Invalid author_id" });
+                return;
+            }
+            if (viewAll == "true") {
+                const searchResult = yield posting_1.PostingModel.find(query);
+                res.json(searchResult);
+                return;
+            }
+        }
         const pageNumber = parseInt(page) || 1;
         const searchResult = yield posting_1.PostingModel.find(query)
             .skip((pageNumber - 1) * itemsPerPage)
             .limit(itemsPerPage)
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .populate({
+            path: "author",
+            model: user_1.UserModel,
+            select: "name", // Include only the 'name' field from the UserModel
+        })
+            .exec();
         res.json(searchResult);
     }
     catch (error) {
@@ -166,7 +187,23 @@ app.post("/user/signin", (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(500).json({ message: error });
     }
 }));
-app.put("/user");
+app.get("/user/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.params;
+    try {
+        const user = yield user_1.UserModel.findById(userId)
+            .select("name email interest")
+            .exec();
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        res.json(user);
+    }
+    catch (error) {
+        console.error("Error retrieving user:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}));
+app.put("/user/:userId");
 app.get("*", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("Wrong Page!");
 }));

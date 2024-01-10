@@ -37,7 +37,7 @@ app.get("/latest-postings", async (req: Request, res: Response) => {
 
 // Route to get postings based on type and title search
 app.get("/search", async (req: Request, res: Response) => {
-  const { type, q, page } = req.query;
+  const { type, q, author_id, page, viewAll } = req.query;
   const itemsPerPage = 10;
 
   try {
@@ -49,13 +49,34 @@ app.get("/search", async (req: Request, res: Response) => {
     if (q) {
       query.title = { $regex: q, $options: "i" }; // Case-insensitive search
     }
+    if (author_id) {
+      try {
+        query.author = new mongoose.Types.ObjectId(String(author_id));
+      } catch (error) {
+        console.error("Invalid author_id:", error);
+        res.status(400).json({ error: "Invalid author_id" });
+        return;
+      }
+
+      if (viewAll == "true") {
+        const searchResult = await PostingModel.find(query);
+        res.json(searchResult);
+        return;
+      }
+    }
 
     const pageNumber = parseInt(page as string) || 1;
 
     const searchResult = await PostingModel.find(query)
       .skip((pageNumber - 1) * itemsPerPage)
       .limit(itemsPerPage)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "author",
+        model: UserModel,
+        select: "name", // Include only the 'name' field from the UserModel
+      })
+      .exec();
 
     res.json(searchResult);
   } catch (error) {
@@ -177,7 +198,26 @@ app.post("/user/signin", async (req: Request, res: Response) => {
   }
 });
 
-app.put("/user");
+app.get("/user/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await UserModel.findById(userId)
+      .select("name email interest")
+      .exec();
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Error retrieving user:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.put("/user/:userId");
 
 app.get("*", async (req: Request, res: Response) => {
   res.send("Wrong Page!");

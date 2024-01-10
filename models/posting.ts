@@ -7,6 +7,12 @@ import mongoose, {
 } from "mongoose";
 import { UserModel, IUser } from "./user";
 
+interface BggData {
+  id: string;
+  name: string;
+  year?: string;
+}
+
 interface IPosting extends Document {
   type: "buy" | "sell";
   title: string;
@@ -16,7 +22,7 @@ interface IPosting extends Document {
   imageSrc: string[];
   author: PopulatedDoc<IUser & Document>;
   createdAt: Date;
-  bggData?: [{ id: string; name: string; year?: string }];
+  bggData?: BggData[];
 }
 
 const postingSchema = new Schema<IPosting>({
@@ -31,17 +37,22 @@ const postingSchema = new Schema<IPosting>({
     ref: "User",
   },
   createdAt: { type: Date, default: Date.now },
-  bggData: [{ id: String, name: String, year: String }],
+  bggData: [
+    {
+      id: { type: String, required: true },
+      name: { type: String, required: true },
+      year: String,
+    },
+  ],
 });
 
-postingSchema.pre<IPosting>('save', function (next) {
+postingSchema.pre<IPosting>("save", function (next) {
   if (!this.createdAt) {
     this.createdAt = new Date();
   }
   next();
 });
 
-
 const PostingModel: Model<IPosting> = mongoose.model("Posting", postingSchema);
 
-export { PostingModel, IPosting };
+export { PostingModel, IPosting, BggData };

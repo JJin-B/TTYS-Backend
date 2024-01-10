@@ -49,7 +49,14 @@ const userSchema = new mongoose_1.Schema({
         unique: true,
     },
     interests: {
-        type: [String],
+        type: [
+            {
+                interestType: { type: String, required: true, enum: ["sell", "buy"] },
+                id: { type: String, required: true },
+                name: { type: String, required: true },
+                year: String,
+            },
+        ],
         default: [],
     },
     userSetting: {},
