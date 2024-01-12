@@ -117,7 +117,6 @@ app.get("/posting/:postId", async (req: Request, res: Response) => {
 
 app.put("/posting/:postId", async (req: Request, res: Response) => {
   const { postId } = req.params;
-  console.log(req.body);
   try {
     const posting = await PostingModel.findById(postId);
     if (!posting) {
@@ -203,7 +202,7 @@ app.get("/user/:userId", async (req, res) => {
 
   try {
     const user = await UserModel.findById(userId)
-      .select("name email interest")
+      .select("name email interests")
       .exec();
 
     if (!user) {
@@ -217,10 +216,41 @@ app.get("/user/:userId", async (req, res) => {
   }
 });
 
-app.put("/user/:userId");
+app.patch("/user/:userId/interest", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "Posting not found" });
+    }
+
+    // if (!posting.author.equals(req.user._id)) {
+    //   req.flash("error", "You do not have the permission to do that!.");
+    //
+    // }
+
+    const updatedPost = await UserModel.findByIdAndUpdate(
+      userId,
+      { interests: req.body },
+      { new: true }
+    );
+
+    if (updatedPost) {
+      return res.json(updatedPost);
+    } else {
+      return res
+        .status(500)
+        .json({ error: "Failed to update user interest list" });
+    }
+  } catch (error) {
+    console.error("Error finding user!:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 app.get("*", async (req: Request, res: Response) => {
-  res.send("Wrong Page!");
+  res.json("Wrong Page!");
 });
 
 app.listen(PORT, () => {

@@ -118,7 +118,6 @@ app.get("/posting/:postId", (req, res) => __awaiter(void 0, void 0, void 0, func
 }));
 app.put("/posting/:postId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { postId } = req.params;
-    console.log(req.body);
     try {
         const posting = yield posting_1.PostingModel.findById(postId);
         if (!posting) {
@@ -191,7 +190,7 @@ app.get("/user/:userId", (req, res) => __awaiter(void 0, void 0, void 0, functio
     const { userId } = req.params;
     try {
         const user = yield user_1.UserModel.findById(userId)
-            .select("name email interest")
+            .select("name email interests")
             .exec();
         if (!user) {
             return res.status(404).json({ error: "User not found" });
@@ -203,9 +202,34 @@ app.get("/user/:userId", (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(500).json({ error: "Internal server error" });
     }
 }));
-app.put("/user/:userId");
+app.patch("/user/:userId/interest", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.params;
+    try {
+        const user = yield user_1.UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "Posting not found" });
+        }
+        // if (!posting.author.equals(req.user._id)) {
+        //   req.flash("error", "You do not have the permission to do that!.");
+        //
+        // }
+        const updatedPost = yield user_1.UserModel.findByIdAndUpdate(userId, { interests: req.body }, { new: true });
+        if (updatedPost) {
+            return res.json(updatedPost);
+        }
+        else {
+            return res
+                .status(500)
+                .json({ error: "Failed to update user interest list" });
+        }
+    }
+    catch (error) {
+        console.error("Error finding user!:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}));
 app.get("*", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.send("Wrong Page!");
+    res.json("Wrong Page!");
 }));
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
