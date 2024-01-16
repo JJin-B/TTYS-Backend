@@ -14,6 +14,10 @@ interface IUser extends Document {
   interests?: UserInterest[];
   userSetting: {};
   isEmailVerified: boolean;
+  notifications: {
+    postingId: Schema.Types.ObjectId; // ObjectId for the Posting
+    isViewed: boolean;
+  }[];
 }
 
 const userSchema: Schema = new Schema({
@@ -51,6 +55,16 @@ const userSchema: Schema = new Schema({
   isEmailVerified: {
     type: Boolean,
     default: true,
+  },
+
+  notifications: {
+    type: [
+      {
+        postingId: { type: Schema.Types.ObjectId, ref: "PostingModel" },
+        isViewed: { type: Boolean, default: false },
+      },
+    ],
+    default: [],
   },
 });
 

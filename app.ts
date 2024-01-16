@@ -91,6 +91,32 @@ app.post("/posting/new", async (req: Request, res: Response) => {
 
     const savedPosting = await newPosting.save();
 
+    if (savedPosting.bggData && savedPosting.bggData?.length > 0) {
+      const bggIds: string[] = savedPosting.bggData.map((data) => data.id);
+
+      const notifiedUsers = await UserModel.find({
+        interests: {
+          $elemMatch: {
+            id: {
+              $in: bggIds,
+            },
+            type: { $ne: savedPosting.type },
+          },
+        },
+        _id: { $ne: savedPosting.author._id },
+      }).exec();
+
+      notifiedUsers.forEach(async (user) => {
+        user.notifications = [
+          ...user.notifications,
+          { postingId: savedPosting._id, isViewed: false },
+        ];
+
+        // Save the user with the updated notifications
+        await user.save();
+      });
+    }
+
     res.status(201).json(savedPosting);
   } catch (error) {
     console.error(error);
@@ -202,7 +228,12 @@ app.get("/user/:userId", async (req, res) => {
 
   try {
     const user = await UserModel.findById(userId)
-      .select("name email interests")
+      .select("name email interests userSetting notifications")
+      .populate({
+        path: "notifications.postingId",
+        model: PostingModel,
+        select: "title type",
+      })
       .exec();
 
     if (!user) {
@@ -222,7 +253,7 @@ app.patch("/user/:userId/interest", async (req, res) => {
   try {
     const user = await UserModel.findById(userId);
     if (!user) {
-      return res.status(404).json({ error: "Posting not found" });
+      return res.status(404).json({ error: "User not found" });
     }
 
     // if (!posting.author.equals(req.user._id)) {
@@ -230,18 +261,53 @@ app.patch("/user/:userId/interest", async (req, res) => {
     //
     // }
 
-    const updatedPost = await UserModel.findByIdAndUpdate(
+    const updatedUser = await UserModel.findByIdAndUpdate(
       userId,
       { interests: req.body },
       { new: true }
     );
 
-    if (updatedPost) {
-      return res.json(updatedPost);
+    if (updatedUser) {
+      return res.json(updatedUser);
     } else {
       return res
         .status(500)
         .json({ error: "Failed to update user interest list" });
+    }
+  } catch (error) {
+    console.error("Error finding user!:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.patch("/user/:userId/checkNotification", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // if (!posting.author.equals(req.user._id)) {
+    //   req.flash("error", "You do not have the permission to do that!.");
+    //
+    // }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      { $set: { "notifications.$[].isViewed": true } },
+      { new: true }
+    )
+      .select("name email interests userSetting notifications")
+      .exec();
+
+    if (updatedUser) {
+      return res.json(updatedUser);
+    } else {
+      return res
+        .status(500)
+        .json({ error: "Failed to update user notification viewed" });
     }
   } catch (error) {
     console.error("Error finding user!:", error);

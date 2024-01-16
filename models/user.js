@@ -64,6 +64,15 @@ const userSchema = new mongoose_1.Schema({
         type: Boolean,
         default: true,
     },
+    notifications: {
+        type: [
+            {
+                postingId: { type: mongoose_1.Schema.Types.ObjectId, ref: "PostingModel" },
+                isViewed: { type: Boolean, default: false },
+            },
+        ],
+        default: [],
+    },
 });
 userSchema.plugin(passport_local_mongoose_1.default);
 const UserModel = mongoose_1.default.model("User", userSchema);

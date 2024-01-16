@@ -89,9 +89,32 @@ app.get("/search", (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 }));
 app.post("/posting/new", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const newPosting = new posting_1.PostingModel(req.body);
         const savedPosting = yield newPosting.save();
+        if (savedPosting.bggData && ((_a = savedPosting.bggData) === null || _a === void 0 ? void 0 : _a.length) > 0) {
+            const bggIds = savedPosting.bggData.map((data) => data.id);
+            const notifiedUsers = yield user_1.UserModel.find({
+                interests: {
+                    $elemMatch: {
+                        id: {
+                            $in: bggIds,
+                        },
+                        type: { $ne: savedPosting.type },
+                    },
+                },
+                _id: { $ne: savedPosting.author._id },
+            }).exec();
+            notifiedUsers.forEach((user) => __awaiter(void 0, void 0, void 0, function* () {
+                user.notifications = [
+                    ...user.notifications,
+                    { postingId: savedPosting._id, isViewed: false },
+                ];
+                // Save the user with the updated notifications
+                yield user.save();
+            }));
+        }
         res.status(201).json(savedPosting);
     }
     catch (error) {
@@ -190,7 +213,12 @@ app.get("/user/:userId", (req, res) => __awaiter(void 0, void 0, void 0, functio
     const { userId } = req.params;
     try {
         const user = yield user_1.UserModel.findById(userId)
-            .select("name email interests")
+            .select("name email interests userSetting notifications")
+            .populate({
+            path: "notifications.postingId",
+            model: posting_1.PostingModel,
+            select: "title type",
+        })
             .exec();
         if (!user) {
             return res.status(404).json({ error: "User not found" });
@@ -207,20 +235,48 @@ app.patch("/user/:userId/interest", (req, res) => __awaiter(void 0, void 0, void
     try {
         const user = yield user_1.UserModel.findById(userId);
         if (!user) {
-            return res.status(404).json({ error: "Posting not found" });
+            return res.status(404).json({ error: "User not found" });
         }
         // if (!posting.author.equals(req.user._id)) {
         //   req.flash("error", "You do not have the permission to do that!.");
         //
         // }
-        const updatedPost = yield user_1.UserModel.findByIdAndUpdate(userId, { interests: req.body }, { new: true });
-        if (updatedPost) {
-            return res.json(updatedPost);
+        const updatedUser = yield user_1.UserModel.findByIdAndUpdate(userId, { interests: req.body }, { new: true });
+        if (updatedUser) {
+            return res.json(updatedUser);
         }
         else {
             return res
                 .status(500)
                 .json({ error: "Failed to update user interest list" });
+        }
+    }
+    catch (error) {
+        console.error("Error finding user!:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}));
+app.patch("/user/:userId/checkNotification", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.params;
+    try {
+        const user = yield user_1.UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        // if (!posting.author.equals(req.user._id)) {
+        //   req.flash("error", "You do not have the permission to do that!.");
+        //
+        // }
+        const updatedUser = yield user_1.UserModel.findByIdAndUpdate(userId, { $set: { "notifications.$[].isViewed": true } }, { new: true })
+            .select("name email interests userSetting notifications")
+            .exec();
+        if (updatedUser) {
+            return res.json(updatedUser);
+        }
+        else {
+            return res
+                .status(500)
+                .json({ error: "Failed to update user notification viewed" });
         }
     }
     catch (error) {

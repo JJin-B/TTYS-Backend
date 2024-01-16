@@ -5,7 +5,8 @@ import mongoose, {
   Model,
   PopulatedDoc,
 } from "mongoose";
-import { UserModel, IUser } from "./user";
+
+import { IUser } from "./user";
 
 interface BggData {
   id: string;
@@ -34,7 +35,7 @@ const postingSchema = new Schema<IPosting>({
   imageSrc: [String],
   author: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: "UserModel",
   },
   createdAt: { type: Date, default: Date.now },
   bggData: [

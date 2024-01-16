@@ -34,7 +34,7 @@ const postingSchema = new mongoose_1.Schema({
     imageSrc: [String],
     author: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "UserModel",
     },
     createdAt: { type: Date, default: Date.now },
     bggData: [
