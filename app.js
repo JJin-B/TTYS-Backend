@@ -20,7 +20,7 @@ const posting_1 = require("./models/posting");
 const user_1 = require("./models/user");
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 443;
 mongoose_1.default.connect("mongodb://localhost:27017/tradeyourshelfofshame");
 const db = mongoose_1.default.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
