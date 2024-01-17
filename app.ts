@@ -5,10 +5,12 @@ import mongoose from "mongoose";
 
 import { PostingModel, IPosting } from "./models/posting";
 import { UserModel } from "./models/user";
+import { MessageModel } from "./models/message";
+
 import cors from "cors";
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 
 mongoose.connect("mongodb://localhost:27017/tradeyourshelfofshame");
 const db = mongoose.connection;
