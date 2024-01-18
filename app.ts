@@ -326,11 +326,9 @@ app.put("/message", async (req: Request, res: Response) => {
     });
 
     if (!users || users.length !== 2) {
-      return res
-        .status(400)
-        .json({
-          error: "Invalid Users: either wrong receving or sending user",
-        });
+      return res.status(400).json({
+        error: "Invalid Users: either wrong receving or sending user",
+      });
     }
     const posting = await PostingModel.findById(postId);
 
@@ -423,6 +421,30 @@ app.get("/message/:userId", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error sending message:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.put("/message/readMessages", async (req: Request, res: Response) => {
+  const { userId, chatId } = req.body;
+
+  try {
+    const message = await MessageModel.findById(chatId);
+    if (!message) {
+      return res.status(404).json({ error: "Invalid Message" });
+    }
+
+    message.messages.forEach((msg) => {
+      if (msg.sentBy !== userId) {
+        msg.isViewed = true;
+      }
+    });
+
+    await message.save();
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("Error updating message:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

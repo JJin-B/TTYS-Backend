@@ -292,9 +292,7 @@ app.put("/message", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             $or: [{ _id: senderId }, { _id: receiverId }],
         });
         if (!users || users.length !== 2) {
-            return res
-                .status(400)
-                .json({
+            return res.status(400).json({
                 error: "Invalid Users: either wrong receving or sending user",
             });
         }
@@ -383,6 +381,26 @@ app.get("/message/:userId", (req, res) => __awaiter(void 0, void 0, void 0, func
     catch (error) {
         console.error("Error sending message:", error);
         res.status(500).json({ error: "Internal server error" });
+    }
+}));
+app.put("/message/readMessages", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId, chatId } = req.body;
+    try {
+        const message = yield message_1.MessageModel.findById(chatId);
+        if (!message) {
+            return res.status(404).json({ error: "Invalid Message" });
+        }
+        message.messages.forEach((msg) => {
+            if (msg.sentBy !== userId) {
+                msg.isViewed = true;
+            }
+        });
+        yield message.save();
+        return res.json({ success: true });
+    }
+    catch (error) {
+        console.error("Error updating message:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 }));
 app.get("*", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
