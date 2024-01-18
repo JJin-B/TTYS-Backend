@@ -417,7 +417,29 @@ app.put("/message/:chatId", (req, res) => __awaiter(void 0, void 0, void 0, func
         };
         chat.messages.push(newMessage);
         yield chat.save();
-        return res.json({ success: true });
+        const messages = yield message_1.MessageModel.find({
+            $or: [{ sender: userId }, { receiver: userId }],
+        }).populate([
+            {
+                path: "sender",
+                model: user_1.UserModel,
+                select: "name",
+            },
+            {
+                path: "receiver",
+                model: user_1.UserModel,
+                select: "name",
+            },
+            {
+                path: "posting",
+                model: posting_1.PostingModel,
+                select: "title author",
+            },
+        ]);
+        if (!messages) {
+            return res.status(500).json({ error: "Internal Server Error!" });
+        }
+        return res.json(messages);
     }
     catch (error) {
         console.error("Error updating message:", error);
