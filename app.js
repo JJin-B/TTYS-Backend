@@ -327,7 +327,7 @@ app.put("/message", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             });
             savedMessage = yield messages.save();
         }
-        if (messages) {
+        if (savedMessage) {
             return res.json(yield savedMessage.populate([
                 {
                     path: "sender",
@@ -396,6 +396,27 @@ app.put("/message/readMessages", (req, res) => __awaiter(void 0, void 0, void 0,
             }
         });
         yield message.save();
+        return res.json({ success: true });
+    }
+    catch (error) {
+        console.error("Error updating message:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+}));
+app.put("/message/:chatId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId, chatId } = req.body;
+    const { messageContent } = req.body; // Assuming the message content is passed in the request body
+    try {
+        const chat = yield message_1.MessageModel.findById(chatId);
+        if (!chat) {
+            return res.status(404).json({ error: "Invalid Chat" });
+        }
+        const newMessage = {
+            message: messageContent,
+            sentBy: new mongoose_1.default.Types.ObjectId(String(userId)),
+        };
+        chat.messages.push(newMessage);
+        yield chat.save();
         return res.json({ success: true });
     }
     catch (error) {

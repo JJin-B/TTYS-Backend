@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 
 import { PostingModel, IPosting } from "./models/posting";
 import { UserModel } from "./models/user";
-import { MessageModel } from "./models/message";
+import { Message, MessageModel } from "./models/message";
 
 import cors from "cors";
 
@@ -366,7 +366,7 @@ app.put("/message", async (req: Request, res: Response) => {
       savedMessage = await messages.save();
     }
 
-    if (messages) {
+    if (savedMessage) {
       return res.json(
         await savedMessage.populate([
           {
@@ -440,6 +440,55 @@ app.put("/message/readMessages", async (req: Request, res: Response) => {
     });
 
     await message.save();
+
+    const messages = await MessageModel.find({
+      $or: [{ sender: userId }, { receiver: userId }],
+    }).populate([
+      {
+        path: "sender",
+        model: UserModel,
+        select: "name",
+      },
+      {
+        path: "receiver",
+        model: UserModel,
+        select: "name",
+      },
+      {
+        path: "posting",
+        model: PostingModel,
+        select: "title author",
+      },
+    ]);
+
+    if (!messages) {
+      return res.status(500).json({ error: "Internal Server Error!" });
+    }
+
+    return res.json(messages);
+  } catch (error) {
+    console.error("Error updating message:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.put("/message/:chatId", async (req: Request, res: Response) => {
+  const { userId, chatId } = req.body;
+  const { messageContent } = req.body; // Assuming the message content is passed in the request body
+
+  try {
+    const chat = await MessageModel.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ error: "Invalid Chat" });
+    }
+
+    const newMessage: Message = {
+      message: messageContent,
+      sentBy: new mongoose.Types.ObjectId(String(userId)),
+    };
+
+    chat.messages.push(newMessage);
+    await chat.save();
 
     return res.json({ success: true });
   } catch (error) {

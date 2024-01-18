@@ -6,16 +6,18 @@ import mongoose, {
   PopulatedDoc,
 } from "mongoose";
 
+interface Message {
+  message: string;
+  sentBy: Types.ObjectId;
+  createdAt?: Date;
+  isViewed?: boolean;
+}
+
 interface IMessage extends Document {
   sender: Types.ObjectId;
   receiver: Types.ObjectId;
   posting?: Types.ObjectId;
-  messages: {
-    message: string;
-    sentBy: Types.ObjectId;
-    createdAt: Date;
-    isViewed: boolean;
-  }[];
+  messages: Message[];
 }
 
 const messageSchema: Schema = new Schema<IMessage>({
@@ -39,7 +41,7 @@ const messageSchema: Schema = new Schema<IMessage>({
       {
         message: { type: String },
         sentBy: { type: Schema.Types.ObjectId, ref: "UserModel" },
-        createdAt: { type: Date, default: Date.now }, 
+        createdAt: { type: Date, default: Date.now },
         isViewed: { type: Boolean, default: false },
       },
     ],
@@ -52,4 +54,4 @@ const MessageModel: Model<IMessage> = mongoose.model<IMessage>(
 );
 export default MessageModel;
 
-export { MessageModel };
+export { Message, MessageModel };
