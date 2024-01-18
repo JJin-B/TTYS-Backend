@@ -10,7 +10,7 @@ import { MessageModel } from "./models/message";
 import cors from "cors";
 
 const app = express();
-const PORT = process.env.PORT || 443;
+const PORT = process.env.PORT || 3001;
 
 mongoose.connect("mongodb://localhost:27017/tradeyourshelfofshame");
 const db = mongoose.connection;
@@ -313,6 +313,90 @@ app.patch("/user/:userId/checkNotification", async (req, res) => {
     }
   } catch (error) {
     console.error("Error finding user!:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.put("/message", async (req: Request, res: Response) => {
+  try {
+    const { senderId, receiverId, postId, message } = req.body;
+    const users = await UserModel.find({
+      $or: [{ _id: senderId }, { _id: receiverId }],
+    });
+
+    if (!users || users.length !== 2) {
+      return res.status(400).json({ error: "Invalid Users" });
+    }
+
+    const posting = await PostingModel.findById(postId);
+
+    if (!posting) {
+      return res.status(400).json({ error: "Invalid Posting" });
+    }
+
+    const messages = await MessageModel.findOne({
+      sender: senderId,
+      receiver: receiverId,
+      posting: postId,
+    });
+
+    if (messages) {
+      messages.messages.push({
+        message: message,
+        sentBy: new mongoose.Types.ObjectId(String(senderId)),
+        createdAt: new Date(),
+        isViewed: false,
+      });
+
+      messages.save();
+    } else {
+      const messages = new MessageModel({
+        sender: new mongoose.Types.ObjectId(String(senderId)),
+        receiver: new mongoose.Types.ObjectId(String(receiverId)),
+        posting: new mongoose.Types.ObjectId(String(postId)),
+        messages: {
+          message: message,
+          sentBy: new mongoose.Types.ObjectId(String(senderId)),
+        },
+      });
+      messages.save();
+    }
+
+    // const user = await UserModel.findById(senderId);
+    // if (!user) {
+    //   return res.status(404).json({ error: "Posting not found" });
+    // }
+
+    // if (!posting.author.equals(req.user._id)) {
+    //   req.flash("error", "You do not have the permission to do that!.");
+    //
+    // }
+
+    // const updatedPost = await PostingModel.findByIdAndUpdate(
+    //   { ...req.body, createdAt: new Date() },
+    //   { new: true }
+    // );
+
+    if (messages) {
+      return res.json(
+        await messages.populate([
+          {
+            path: "sender",
+            model: UserModel,
+            select: "name",
+          },
+          {
+            path: "receiver",
+            model: UserModel,
+            select: "name",
+          },
+        ])
+      );
+    } else {
+      return res.status(500).json({ error: "Failed to update posting" });
+    }
+  } catch (error) {
+    console.error("Error sending message:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

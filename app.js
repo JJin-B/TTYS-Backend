@@ -18,9 +18,10 @@ const mongoose_1 = __importDefault(require("mongoose"));
 // import session from 'express-session';
 const posting_1 = require("./models/posting");
 const user_1 = require("./models/user");
+const message_1 = require("./models/message");
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
-const PORT = process.env.PORT || 443;
+const PORT = process.env.PORT || 3001;
 mongoose_1.default.connect("mongodb://localhost:27017/tradeyourshelfofshame");
 const db = mongoose_1.default.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
@@ -281,6 +282,80 @@ app.patch("/user/:userId/checkNotification", (req, res) => __awaiter(void 0, voi
     }
     catch (error) {
         console.error("Error finding user!:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}));
+app.put("/message", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { senderId, receiverId, postId, message } = req.body;
+        const users = yield user_1.UserModel.find({
+            $or: [{ _id: senderId }, { _id: receiverId }],
+        });
+        if (!users || users.length !== 2) {
+            return res.status(400).json({ error: "Invalid Users" });
+        }
+        const posting = yield posting_1.PostingModel.findById(postId);
+        if (!posting) {
+            return res.status(400).json({ error: "Invalid Posting" });
+        }
+        const messages = yield message_1.MessageModel.findOne({
+            sender: senderId,
+            receiver: receiverId,
+            posting: postId,
+        });
+        if (messages) {
+            messages.messages.push({
+                message: message,
+                sentBy: new mongoose_1.default.Types.ObjectId(String(senderId)),
+                createdAt: new Date(),
+                isViewed: false,
+            });
+            messages.save();
+        }
+        else {
+            const messages = new message_1.MessageModel({
+                sender: new mongoose_1.default.Types.ObjectId(String(senderId)),
+                receiver: new mongoose_1.default.Types.ObjectId(String(receiverId)),
+                posting: new mongoose_1.default.Types.ObjectId(String(postId)),
+                messages: {
+                    message: message,
+                    sentBy: new mongoose_1.default.Types.ObjectId(String(senderId)),
+                },
+            });
+            messages.save();
+        }
+        // const user = await UserModel.findById(senderId);
+        // if (!user) {
+        //   return res.status(404).json({ error: "Posting not found" });
+        // }
+        // if (!posting.author.equals(req.user._id)) {
+        //   req.flash("error", "You do not have the permission to do that!.");
+        //
+        // }
+        // const updatedPost = await PostingModel.findByIdAndUpdate(
+        //   { ...req.body, createdAt: new Date() },
+        //   { new: true }
+        // );
+        if (messages) {
+            return res.json(yield messages.populate([
+                {
+                    path: "sender",
+                    model: user_1.UserModel,
+                    select: "name",
+                },
+                {
+                    path: "receiver",
+                    model: user_1.UserModel,
+                    select: "name",
+                },
+            ]));
+        }
+        else {
+            return res.status(500).json({ error: "Failed to update posting" });
+        }
+    }
+    catch (error) {
+        console.error("Error sending message:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 }));

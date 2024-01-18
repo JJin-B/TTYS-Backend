@@ -7,8 +7,8 @@ import mongoose, {
 } from "mongoose";
 
 interface IMessage extends Document {
-  senderId: Types.ObjectId;
-  receiverId: Types.ObjectId;
+  sender: Types.ObjectId;
+  receiver: Types.ObjectId;
   posting?: Types.ObjectId;
   messages: {
     message: string;
@@ -19,12 +19,12 @@ interface IMessage extends Document {
 }
 
 const messageSchema: Schema = new Schema<IMessage>({
-  senderId: {
+  sender: {
     type: Schema.Types.ObjectId,
     ref: "UserModel",
     required: true,
   },
-  receiverId: {
+  receiver: {
     type: Schema.Types.ObjectId,
     ref: "UserModel",
     required: true,
@@ -39,7 +39,7 @@ const messageSchema: Schema = new Schema<IMessage>({
       {
         message: { type: String },
         sentBy: { type: Schema.Types.ObjectId, ref: "UserModel" },
-        createdAt: { type: Date, default: Date.now }, // Fix here
+        createdAt: { type: Date, default: Date.now }, 
         isViewed: { type: Boolean, default: false },
       },
     ],

@@ -26,12 +26,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessageModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const messageSchema = new mongoose_1.Schema({
-    senderId: {
+    sender: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "UserModel",
         required: true,
     },
-    receiverId: {
+    receiver: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "UserModel",
         required: true,
@@ -45,7 +45,7 @@ const messageSchema = new mongoose_1.Schema({
             {
                 message: { type: String },
                 sentBy: { type: mongoose_1.Schema.Types.ObjectId, ref: "UserModel" },
-                createdAt: { type: Date, default: Date.now }, // Fix here
+                createdAt: { type: Date, default: Date.now },
                 isViewed: { type: Boolean, default: false },
             },
         ],
