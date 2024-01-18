@@ -292,7 +292,11 @@ app.put("/message", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             $or: [{ _id: senderId }, { _id: receiverId }],
         });
         if (!users || users.length !== 2) {
-            return res.status(400).json({ error: "Invalid Users" });
+            return res
+                .status(400)
+                .json({
+                error: "Invalid Users: either wrong receving or sending user",
+            });
         }
         const posting = yield posting_1.PostingModel.findById(postId);
         if (!posting) {
@@ -303,6 +307,7 @@ app.put("/message", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             receiver: receiverId,
             posting: postId,
         });
+        let savedMessage;
         if (messages) {
             messages.messages.push({
                 message: message,
@@ -310,7 +315,7 @@ app.put("/message", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 createdAt: new Date(),
                 isViewed: false,
             });
-            messages.save();
+            savedMessage = yield messages.save();
         }
         else {
             const messages = new message_1.MessageModel({
@@ -322,22 +327,10 @@ app.put("/message", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     sentBy: new mongoose_1.default.Types.ObjectId(String(senderId)),
                 },
             });
-            messages.save();
+            savedMessage = yield messages.save();
         }
-        // const user = await UserModel.findById(senderId);
-        // if (!user) {
-        //   return res.status(404).json({ error: "Posting not found" });
-        // }
-        // if (!posting.author.equals(req.user._id)) {
-        //   req.flash("error", "You do not have the permission to do that!.");
-        //
-        // }
-        // const updatedPost = await PostingModel.findByIdAndUpdate(
-        //   { ...req.body, createdAt: new Date() },
-        //   { new: true }
-        // );
         if (messages) {
-            return res.json(yield messages.populate([
+            return res.json(yield savedMessage.populate([
                 {
                     path: "sender",
                     model: user_1.UserModel,
@@ -353,6 +346,39 @@ app.put("/message", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         else {
             return res.status(500).json({ error: "Failed to update posting" });
         }
+    }
+    catch (error) {
+        console.error("Error sending message:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}));
+app.get("/message/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.params;
+    const user = yield user_1.UserModel.findById(userId);
+    if (!user) {
+        return res.status(500).json({ error: "Invalid User" });
+    }
+    try {
+        const messages = yield message_1.MessageModel.find({
+            $or: [{ sender: userId }, { receiver: userId }],
+        }).populate([
+            {
+                path: "sender",
+                model: user_1.UserModel,
+                select: "name",
+            },
+            {
+                path: "receiver",
+                model: user_1.UserModel,
+                select: "name",
+            },
+            {
+                path: "posting",
+                model: posting_1.PostingModel,
+                select: "title author",
+            },
+        ]);
+        return res.json(messages);
     }
     catch (error) {
         console.error("Error sending message:", error);

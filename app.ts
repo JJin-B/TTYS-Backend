@@ -320,14 +320,18 @@ app.patch("/user/:userId/checkNotification", async (req, res) => {
 app.put("/message", async (req: Request, res: Response) => {
   try {
     const { senderId, receiverId, postId, message } = req.body;
+
     const users = await UserModel.find({
       $or: [{ _id: senderId }, { _id: receiverId }],
     });
 
     if (!users || users.length !== 2) {
-      return res.status(400).json({ error: "Invalid Users" });
+      return res
+        .status(400)
+        .json({
+          error: "Invalid Users: either wrong receving or sending user",
+        });
     }
-
     const posting = await PostingModel.findById(postId);
 
     if (!posting) {
@@ -340,6 +344,8 @@ app.put("/message", async (req: Request, res: Response) => {
       posting: postId,
     });
 
+    let savedMessage;
+
     if (messages) {
       messages.messages.push({
         message: message,
@@ -348,7 +354,7 @@ app.put("/message", async (req: Request, res: Response) => {
         isViewed: false,
       });
 
-      messages.save();
+      savedMessage = await messages.save();
     } else {
       const messages = new MessageModel({
         sender: new mongoose.Types.ObjectId(String(senderId)),
@@ -359,27 +365,12 @@ app.put("/message", async (req: Request, res: Response) => {
           sentBy: new mongoose.Types.ObjectId(String(senderId)),
         },
       });
-      messages.save();
+      savedMessage = await messages.save();
     }
-
-    // const user = await UserModel.findById(senderId);
-    // if (!user) {
-    //   return res.status(404).json({ error: "Posting not found" });
-    // }
-
-    // if (!posting.author.equals(req.user._id)) {
-    //   req.flash("error", "You do not have the permission to do that!.");
-    //
-    // }
-
-    // const updatedPost = await PostingModel.findByIdAndUpdate(
-    //   { ...req.body, createdAt: new Date() },
-    //   { new: true }
-    // );
 
     if (messages) {
       return res.json(
-        await messages.populate([
+        await savedMessage.populate([
           {
             path: "sender",
             model: UserModel,
@@ -395,6 +386,40 @@ app.put("/message", async (req: Request, res: Response) => {
     } else {
       return res.status(500).json({ error: "Failed to update posting" });
     }
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/message/:userId", async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    return res.status(500).json({ error: "Invalid User" });
+  }
+  try {
+    const messages = await MessageModel.find({
+      $or: [{ sender: userId }, { receiver: userId }],
+    }).populate([
+      {
+        path: "sender",
+        model: UserModel,
+        select: "name",
+      },
+      {
+        path: "receiver",
+        model: UserModel,
+        select: "name",
+      },
+      {
+        path: "posting",
+        model: PostingModel,
+        select: "title author",
+      },
+    ]);
+
+    return res.json(messages);
   } catch (error) {
     console.error("Error sending message:", error);
     res.status(500).json({ error: "Internal server error" });
