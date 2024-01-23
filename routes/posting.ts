@@ -6,6 +6,7 @@ import { UserModel } from "../models/user";
 
 const router = express.Router();
 
+// Endpoint to get the latest 8 postings
 router.get("/latest-postings", async (req: Request, res: Response) => {
   console.log("latest-posting hit");
   try {

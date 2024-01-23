@@ -5,10 +5,6 @@ import { createProxyServer } from "http-proxy";
 // import LocalStrategy from 'passport-local';
 // import session from 'express-session';
 
-import { PostingModel, IPosting } from "./models/posting";
-import { UserModel } from "./models/user";
-import { Message, MessageModel } from "./models/message";
-
 import postingRoutes from "./routes/posting";
 import userRoutes from "./routes/user";
 import messageRoutes from "./routes/message";
@@ -52,7 +48,7 @@ app.use(cors());
 // Middleware to parse JSON in the request body
 app.use(express.json());
 
-// Endpoint to get the latest 8 postings
+
 
 app.use("/posting", postingRoutes);
 app.use("/user", userRoutes);
