@@ -1,5 +1,7 @@
 import express, { Request, Response } from "express";
 import mongoose from "mongoose";
+import { createProxyServer } from "http-proxy";
+
 // import LocalStrategy from 'passport-local';
 // import session from 'express-session';
 
@@ -10,6 +12,7 @@ import { Message, MessageModel } from "./models/message";
 import cors from "cors";
 
 const app = express();
+
 const PORT = process.env.PORT || 3001;
 
 mongoose.connect("mongodb://localhost:27017/tradeyourshelfofshame");
@@ -20,11 +23,31 @@ db.once("open", () => {
   console.log("MongoDB connected successfully");
 });
 
+// Setting for CORS
+const apiProxy = createProxyServer();
+const allowedOrigin =
+  "https://9afnnp3x28.execute-api.us-east-2.amazonaws.com/TTYS"; // AWS API GATEWAY url
+const corsOptions: cors.CorsOptions = {
+  origin: allowedOrigin,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
+// Proxy requests to the actual backend API
+app.all('/api/*', (req, res) => {
+  apiProxy.web(req, res, {
+    target: 'http://3.145.3.210:3001', // backend API server URL
+    changeOrigin: true,
+  });
+});
+
+
 // Middleware to parse JSON in the request body
 app.use(express.json());
-app.use(cors());
 
-// Route to get the latest 8 postings
+// Endpoint to get the latest 8 postings
 app.get("/latest-postings", async (req: Request, res: Response) => {
   try {
     const latestPostings = await PostingModel.find()
@@ -37,9 +60,10 @@ app.get("/latest-postings", async (req: Request, res: Response) => {
   }
 });
 
-// Route to get postings based on type and title search
+// Endpoint to get postings based on search queries
 app.get("/search", async (req: Request, res: Response) => {
   const { type, q, author_id, page, viewAll } = req.query;
+  // console.log(req.query);
   const itemsPerPage = 10;
 
   try {
@@ -54,6 +78,7 @@ app.get("/search", async (req: Request, res: Response) => {
     if (author_id) {
       try {
         query.author = new mongoose.Types.ObjectId(String(author_id));
+        query.author = author_id;
       } catch (error) {
         console.error("Invalid author_id:", error);
         res.status(400).json({ error: "Invalid author_id" });
@@ -62,8 +87,7 @@ app.get("/search", async (req: Request, res: Response) => {
 
       if (viewAll == "true") {
         const searchResult = await PostingModel.find(query);
-        res.json(searchResult);
-        return;
+        return res.json(searchResult);
       }
     }
 
@@ -87,6 +111,7 @@ app.get("/search", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to make a new posting
 app.post("/posting/new", async (req: Request, res: Response) => {
   try {
     const newPosting = new PostingModel(req.body);
@@ -126,6 +151,7 @@ app.post("/posting/new", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to get posting details based on the posting Id
 app.get("/posting/:postId", async (req: Request, res: Response) => {
   const { postId } = req.params;
   try {
@@ -143,6 +169,7 @@ app.get("/posting/:postId", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to edit posting details based on the posting Id
 app.put("/posting/:postId", async (req: Request, res: Response) => {
   const { postId } = req.params;
   try {
@@ -173,6 +200,7 @@ app.put("/posting/:postId", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to delete posting based on the posting Id
 app.delete("/posting/:postId", async (req: Request, res: Response) => {
   const { postId } = req.params;
   try {
@@ -183,6 +211,7 @@ app.delete("/posting/:postId", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to register a new user
 app.post("/user/register", async (req: Request, res: Response) => {
   const userParams = req.body;
 
@@ -206,6 +235,7 @@ app.post("/user/register", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to sign in an user
 app.post("/user/signin", async (req: Request, res: Response) => {
   const userParams = req.body;
 
@@ -225,6 +255,7 @@ app.post("/user/signin", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to get user information
 app.get("/user/:userId", async (req, res) => {
   const { userId } = req.params;
 
@@ -249,6 +280,7 @@ app.get("/user/:userId", async (req, res) => {
   }
 });
 
+// Endpoint to get an user's interest list based on the user Id
 app.patch("/user/:userId/interest", async (req, res) => {
   const { userId } = req.params;
 
@@ -282,6 +314,7 @@ app.patch("/user/:userId/interest", async (req, res) => {
   }
 });
 
+// Endpoint to change an user's notifications' isViewed variable to true
 app.patch("/user/:userId/checkNotification", async (req, res) => {
   const { userId } = req.params;
 
@@ -317,6 +350,7 @@ app.patch("/user/:userId/checkNotification", async (req, res) => {
   }
 });
 
+// Endpoint to update messages
 app.put("/message", async (req: Request, res: Response) => {
   try {
     const { senderId, receiverId, postId, message } = req.body;
@@ -390,6 +424,7 @@ app.put("/message", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to get all messages related to an user
 app.get("/message/:userId", async (req: Request, res: Response) => {
   const { userId } = req.params;
   const user = await UserModel.findById(userId);
@@ -424,6 +459,7 @@ app.get("/message/:userId", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to change messages' isRead variable
 app.put("/message/readMessages", async (req: Request, res: Response) => {
   const { userId, chatId } = req.body;
 
@@ -434,7 +470,7 @@ app.put("/message/readMessages", async (req: Request, res: Response) => {
     }
 
     message.messages.forEach((msg) => {
-      if (msg.sentBy !== userId) {
+      if (msg.sentBy != userId) {
         msg.isViewed = true;
       }
     });
@@ -448,9 +484,10 @@ app.put("/message/readMessages", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to send a message
 app.put("/message/:chatId", async (req: Request, res: Response) => {
   const { userId, chatId } = req.body;
-  const { messageContent } = req.body; // Assuming the message content is passed in the request body
+  const { messageContent } = req.body;
 
   try {
     const chat = await MessageModel.findById(chatId);
@@ -464,6 +501,11 @@ app.put("/message/:chatId", async (req: Request, res: Response) => {
     };
 
     chat.messages.push(newMessage);
+    chat.messages.forEach((msg) => {
+      if (msg.sentBy != userId) {
+        msg.isViewed = true;
+      }
+    });
     await chat.save();
 
     const messages = await MessageModel.find({
