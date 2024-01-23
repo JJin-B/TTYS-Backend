@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, Router } from "express";
 import mongoose from "mongoose";
 import { createProxyServer } from "http-proxy";
 
@@ -8,6 +8,10 @@ import { createProxyServer } from "http-proxy";
 import { PostingModel, IPosting } from "./models/posting";
 import { UserModel } from "./models/user";
 import { Message, MessageModel } from "./models/message";
+
+import postingRoutes from "./routes/posting";
+import userRoutes from "./routes/user";
+import messageRoutes from "./routes/message";
 
 import cors from "cors";
 
@@ -23,26 +27,25 @@ db.once("open", () => {
   console.log("MongoDB connected successfully");
 });
 
-// Setting for CORS
-const apiProxy = createProxyServer();
-const allowedOrigin =
-  "https://9afnnp3x28.execute-api.us-east-2.amazonaws.com/TTYS"; // AWS API GATEWAY url
-const corsOptions: cors.CorsOptions = {
-  origin: allowedOrigin,
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true,
-};
+// // Setting for CORS
+// const apiProxy = createProxyServer();
+// const allowedOrigin =
+//   "https://9afnnp3x28.execute-api.us-east-2.amazonaws.com/TTYS"; // AWS API GATEWAY url
+// const corsOptions: cors.CorsOptions = {
+//   origin: allowedOrigin,
+//   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+//   credentials: true,
+// };
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 
-// Proxy requests to the actual backend API
-app.all('/api/*', (req, res) => {
-  apiProxy.web(req, res, {
-    target: 'http://3.145.3.210:3001', // backend API server URL
-    changeOrigin: true,
-  });
-});
-
+// // Proxy requests to the actual backend API
+// app.all('/*', (req, res) => {
+//   apiProxy.web(req, res, {
+//     target: 'http://3.145.3.210:3001', // backend API server URL
+//     changeOrigin: true,
+//   });
+// });
 
 // Middleware to parse JSON in the request body
 app.use(express.json());
@@ -111,433 +114,9 @@ app.get("/search", async (req: Request, res: Response) => {
   }
 });
 
-// Endpoint to make a new posting
-app.post("/posting/new", async (req: Request, res: Response) => {
-  try {
-    const newPosting = new PostingModel(req.body);
-
-    const savedPosting = await newPosting.save();
-
-    if (savedPosting.bggData && savedPosting.bggData?.length > 0) {
-      const bggIds: string[] = savedPosting.bggData.map((data) => data.id);
-
-      const notifiedUsers = await UserModel.find({
-        interests: {
-          $elemMatch: {
-            id: {
-              $in: bggIds,
-            },
-            type: { $ne: savedPosting.type },
-          },
-        },
-        _id: { $ne: savedPosting.author._id },
-      }).exec();
-
-      notifiedUsers.forEach(async (user) => {
-        user.notifications = [
-          ...user.notifications,
-          { postingId: savedPosting._id, isViewed: false },
-        ];
-
-        // Save the user with the updated notifications
-        await user.save();
-      });
-    }
-
-    res.status(201).json(savedPosting);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-});
-
-// Endpoint to get posting details based on the posting Id
-app.get("/posting/:postId", async (req: Request, res: Response) => {
-  const { postId } = req.params;
-  try {
-    const searchResult = await PostingModel.findById(postId)
-      .populate({
-        path: "author",
-        model: UserModel,
-        select: "name", // Include only the 'name' field from the UserModel
-      })
-      .exec();
-    res.json(searchResult);
-  } catch (error) {
-    console.error("Error searching postings:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Endpoint to edit posting details based on the posting Id
-app.put("/posting/:postId", async (req: Request, res: Response) => {
-  const { postId } = req.params;
-  try {
-    const posting = await PostingModel.findById(postId);
-    if (!posting) {
-      return res.status(404).json({ error: "Posting not found" });
-    }
-
-    // if (!posting.author.equals(req.user._id)) {
-    //   req.flash("error", "You do not have the permission to do that!.");
-    //
-    // }
-
-    const updatedPost = await PostingModel.findByIdAndUpdate(
-      postId,
-      { ...req.body, createdAt: new Date() },
-      { new: true }
-    );
-
-    if (updatedPost) {
-      return res.json(updatedPost);
-    } else {
-      return res.status(500).json({ error: "Failed to update posting" });
-    }
-  } catch (error) {
-    console.error("Error searching postings:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Endpoint to delete posting based on the posting Id
-app.delete("/posting/:postId", async (req: Request, res: Response) => {
-  const { postId } = req.params;
-  try {
-    const deletedPost = await PostingModel.findByIdAndDelete(postId);
-  } catch (error) {
-    console.error("Error searching postings:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Endpoint to register a new user
-app.post("/user/register", async (req: Request, res: Response) => {
-  const userParams = req.body;
-
-  try {
-    const isExistingUser = await UserModel.findOne({ email: userParams.email });
-    if (isExistingUser) {
-      return res.json("Existing User");
-    }
-
-    userParams.username = userParams.email;
-
-    const user = new UserModel(userParams);
-    console.log(user);
-    const newUser = await user.save();
-    console.log(newUser);
-
-    return res.json(newUser);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error });
-  }
-});
-
-// Endpoint to sign in an user
-app.post("/user/signin", async (req: Request, res: Response) => {
-  const userParams = req.body;
-
-  try {
-    const isValidUser = await UserModel.findOne({
-      email: userParams.email,
-      password: userParams.password,
-    });
-    if (!isValidUser) {
-      return res.json("Not valid User");
-    }
-
-    return res.json(isValidUser);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error });
-  }
-});
-
-// Endpoint to get user information
-app.get("/user/:userId", async (req, res) => {
-  const { userId } = req.params;
-
-  try {
-    const user = await UserModel.findById(userId)
-      .select("name email interests userSetting notifications")
-      .populate({
-        path: "notifications.postingId",
-        model: PostingModel,
-        select: "title type",
-      })
-      .exec();
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.json(user);
-  } catch (error) {
-    console.error("Error retrieving user:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Endpoint to get an user's interest list based on the user Id
-app.patch("/user/:userId/interest", async (req, res) => {
-  const { userId } = req.params;
-
-  try {
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // if (!posting.author.equals(req.user._id)) {
-    //   req.flash("error", "You do not have the permission to do that!.");
-    //
-    // }
-
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      userId,
-      { interests: req.body },
-      { new: true }
-    );
-
-    if (updatedUser) {
-      return res.json(updatedUser);
-    } else {
-      return res
-        .status(500)
-        .json({ error: "Failed to update user interest list" });
-    }
-  } catch (error) {
-    console.error("Error finding user!:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Endpoint to change an user's notifications' isViewed variable to true
-app.patch("/user/:userId/checkNotification", async (req, res) => {
-  const { userId } = req.params;
-
-  try {
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // if (!posting.author.equals(req.user._id)) {
-    //   req.flash("error", "You do not have the permission to do that!.");
-    //
-    // }
-
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      userId,
-      { $set: { "notifications.$[].isViewed": true } },
-      { new: true }
-    )
-      .select("name email interests userSetting notifications")
-      .exec();
-
-    if (updatedUser) {
-      return res.json(updatedUser);
-    } else {
-      return res
-        .status(500)
-        .json({ error: "Failed to update user notification viewed" });
-    }
-  } catch (error) {
-    console.error("Error finding user!:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Endpoint to update messages
-app.put("/message", async (req: Request, res: Response) => {
-  try {
-    const { senderId, receiverId, postId, message } = req.body;
-
-    const users = await UserModel.find({
-      $or: [{ _id: senderId }, { _id: receiverId }],
-    });
-
-    if (!users || users.length !== 2) {
-      return res.status(400).json({
-        error: "Invalid Users: either wrong receving or sending user",
-      });
-    }
-    const posting = await PostingModel.findById(postId);
-
-    if (!posting) {
-      return res.status(400).json({ error: "Invalid Posting" });
-    }
-
-    const messages = await MessageModel.findOne({
-      sender: senderId,
-      receiver: receiverId,
-      posting: postId,
-    });
-
-    let savedMessage;
-
-    if (messages) {
-      messages.messages.push({
-        message: message,
-        sentBy: new mongoose.Types.ObjectId(String(senderId)),
-        createdAt: new Date(),
-        isViewed: false,
-      });
-
-      savedMessage = await messages.save();
-    } else {
-      const messages = new MessageModel({
-        sender: new mongoose.Types.ObjectId(String(senderId)),
-        receiver: new mongoose.Types.ObjectId(String(receiverId)),
-        posting: new mongoose.Types.ObjectId(String(postId)),
-        messages: {
-          message: message,
-          sentBy: new mongoose.Types.ObjectId(String(senderId)),
-        },
-      });
-      savedMessage = await messages.save();
-    }
-
-    if (savedMessage) {
-      return res.json(
-        await savedMessage.populate([
-          {
-            path: "sender",
-            model: UserModel,
-            select: "name",
-          },
-          {
-            path: "receiver",
-            model: UserModel,
-            select: "name",
-          },
-        ])
-      );
-    } else {
-      return res.status(500).json({ error: "Failed to update posting" });
-    }
-  } catch (error) {
-    console.error("Error sending message:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Endpoint to get all messages related to an user
-app.get("/message/:userId", async (req: Request, res: Response) => {
-  const { userId } = req.params;
-  const user = await UserModel.findById(userId);
-  if (!user) {
-    return res.status(500).json({ error: "Invalid User" });
-  }
-  try {
-    const messages = await MessageModel.find({
-      $or: [{ sender: userId }, { receiver: userId }],
-    }).populate([
-      {
-        path: "sender",
-        model: UserModel,
-        select: "name",
-      },
-      {
-        path: "receiver",
-        model: UserModel,
-        select: "name",
-      },
-      {
-        path: "posting",
-        model: PostingModel,
-        select: "title author",
-      },
-    ]);
-
-    return res.json(messages);
-  } catch (error) {
-    console.error("Error sending message:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Endpoint to change messages' isRead variable
-app.put("/message/readMessages", async (req: Request, res: Response) => {
-  const { userId, chatId } = req.body;
-
-  try {
-    const message = await MessageModel.findById(chatId);
-    if (!message) {
-      return res.status(404).json({ error: "Invalid Message" });
-    }
-
-    message.messages.forEach((msg) => {
-      if (msg.sentBy != userId) {
-        msg.isViewed = true;
-      }
-    });
-
-    await message.save();
-
-    return res.json({ success: true });
-  } catch (error) {
-    console.error("Error updating message:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-// Endpoint to send a message
-app.put("/message/:chatId", async (req: Request, res: Response) => {
-  const { userId, chatId } = req.body;
-  const { messageContent } = req.body;
-
-  try {
-    const chat = await MessageModel.findById(chatId);
-    if (!chat) {
-      return res.status(404).json({ error: "Invalid Chat" });
-    }
-
-    const newMessage: Message = {
-      message: messageContent,
-      sentBy: new mongoose.Types.ObjectId(String(userId)),
-    };
-
-    chat.messages.push(newMessage);
-    chat.messages.forEach((msg) => {
-      if (msg.sentBy != userId) {
-        msg.isViewed = true;
-      }
-    });
-    await chat.save();
-
-    const messages = await MessageModel.find({
-      $or: [{ sender: userId }, { receiver: userId }],
-    }).populate([
-      {
-        path: "sender",
-        model: UserModel,
-        select: "name",
-      },
-      {
-        path: "receiver",
-        model: UserModel,
-        select: "name",
-      },
-      {
-        path: "posting",
-        model: PostingModel,
-        select: "title author",
-      },
-    ]);
-
-    if (!messages) {
-      return res.status(500).json({ error: "Internal Server Error!" });
-    }
-
-    return res.json(messages);
-  } catch (error) {
-    console.error("Error updating message:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+app.use("/posting", postingRoutes);
+app.use("/user", userRoutes);
+app.use("/message", messageRoutes);
 
 app.get("*", async (req: Request, res: Response) => {
   res.json("Wrong Page!");
