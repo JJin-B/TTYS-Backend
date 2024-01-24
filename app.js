@@ -14,12 +14,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
+// import { createProxyServer } from "http-proxy";
 // import LocalStrategy from 'passport-local';
 // import session from 'express-session';
 const posting_1 = __importDefault(require("./routes/posting"));
 const user_1 = __importDefault(require("./routes/user"));
 const message_1 = __importDefault(require("./routes/message"));
-const cors_1 = __importDefault(require("cors"));
+// import cors from "cors";
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3001;
 mongoose_1.default.connect("mongodb://localhost:27017/tradeyourshelfofshame");
@@ -45,7 +46,7 @@ db.once("open", () => {
 //     changeOrigin: true,
 //   });
 // });
-app.use((0, cors_1.default)({ origin: "http://localhost:5173" }));
+// app.use(cors({ origin: "http://localhost:5173" }));
 // Middleware to parse JSON in the request body
 app.use(express_1.default.json());
 app.use("/posting", posting_1.default);
