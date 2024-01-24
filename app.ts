@@ -43,16 +43,27 @@ db.once("open", () => {
 //   });
 // });
 
-app.use(cors());
+app.use(cors({ origin: "http://localhost:5173" }));
 
 // Middleware to parse JSON in the request body
 app.use(express.json());
 
-
-
 app.use("/posting", postingRoutes);
 app.use("/user", userRoutes);
 app.use("/message", messageRoutes);
+
+app.get("/test", async (req: Request, res: Response) => {
+  console.log("Get Request Received");
+  res.status(200).json("Get request");
+});
+app.post("/test", async (req: Request, res: Response) => {
+  console.log("POST Request Received");
+
+  console.log("data:");
+  console.log(req.body);
+
+  res.status(200).json("Post request");
+});
 
 app.get("*", async (req: Request, res: Response) => {
   res.json("Wrong Page!");

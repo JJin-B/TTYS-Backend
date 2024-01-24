@@ -14,6 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
+// import LocalStrategy from 'passport-local';
+// import session from 'express-session';
 const posting_1 = __importDefault(require("./routes/posting"));
 const user_1 = __importDefault(require("./routes/user"));
 const message_1 = __importDefault(require("./routes/message"));
@@ -46,10 +48,17 @@ db.once("open", () => {
 app.use((0, cors_1.default)());
 // Middleware to parse JSON in the request body
 app.use(express_1.default.json());
-// Endpoint to get the latest 8 postings
 app.use("/posting", posting_1.default);
 app.use("/user", user_1.default);
 app.use("/message", message_1.default);
+app.get("/test", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Get Request Received");
+    res.status(200).json("Get request");
+}));
+app.post("/test", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("POST Request Received");
+    res.status(200).json("Post request");
+}));
 app.get("*", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.json("Wrong Page!");
 }));

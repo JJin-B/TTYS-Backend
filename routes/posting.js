@@ -17,6 +17,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const posting_1 = require("../models/posting");
 const user_1 = require("../models/user");
 const router = express_1.default.Router();
+// Endpoint to get the latest 8 postings
 router.get("/latest-postings", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("latest-posting hit");
     try {
