@@ -1,6 +1,6 @@
 import express, { Request, Response, Router } from "express";
 import mongoose from "mongoose";
-import { createProxyServer } from "http-proxy";
+// import { createProxyServer } from "http-proxy";
 
 // import LocalStrategy from 'passport-local';
 // import session from 'express-session';
@@ -9,7 +9,7 @@ import postingRoutes from "./routes/posting";
 import userRoutes from "./routes/user";
 import messageRoutes from "./routes/message";
 
-import cors from "cors";
+// import cors from "cors";
 
 const app = express();
 
@@ -43,7 +43,7 @@ db.once("open", () => {
 //   });
 // });
 
-app.use(cors({ origin: "http://localhost:5173" }));
+// app.use(cors({ origin: "http://localhost:5173" }));
 
 // Middleware to parse JSON in the request body
 app.use(express.json());

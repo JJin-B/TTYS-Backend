@@ -45,7 +45,7 @@ db.once("open", () => {
 //     changeOrigin: true,
 //   });
 // });
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({ origin: "http://localhost:5173" }));
 // Middleware to parse JSON in the request body
 app.use(express_1.default.json());
 app.use("/posting", posting_1.default);
@@ -57,6 +57,8 @@ app.get("/test", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 app.post("/test", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("POST Request Received");
+    console.log("data:");
+    console.log(req.body);
     res.status(200).json("Post request");
 }));
 app.get("*", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
