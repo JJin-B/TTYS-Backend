@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { bgNames, bgDescs, imgUrls } from "./boardgames";
 import { PostingModel, IPosting } from "../models/posting";
 import { UserModel } from "../models/user";
+import { MessageModel } from "../models/message";
 
 mongoose.connect("mongodb://localhost:27017/tradeyourshelfofshame");
 const db = mongoose.connection;
@@ -38,6 +39,10 @@ const seedDB = async (): Promise<void> => {
   });
   await newUser.save();
   console.log("User reset done");
+
+  console.log("Message Model Reset");
+  await MessageModel.deleteMany({});
+  console.log("Message Model Reset done");
 
   console.log("Posting Model deletion starts");
   await PostingModel.deleteMany({});

@@ -16,6 +16,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const boardgames_1 = require("./boardgames");
 const posting_1 = require("../models/posting");
 const user_1 = require("../models/user");
+const message_1 = require("../models/message");
 mongoose_1.default.connect("mongodb://localhost:27017/tradeyourshelfofshame");
 const db = mongoose_1.default.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
@@ -43,6 +44,9 @@ const seedDB = () => __awaiter(void 0, void 0, void 0, function* () {
     });
     yield newUser.save();
     console.log("User reset done");
+    console.log("Message Model Reset");
+    yield message_1.MessageModel.deleteMany({});
+    console.log("Message Model Reset done");
     console.log("Posting Model deletion starts");
     yield posting_1.PostingModel.deleteMany({});
     console.log("deletion ends & dummydata generation starts");
