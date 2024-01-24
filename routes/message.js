@@ -18,9 +18,15 @@ const posting_1 = require("../models/posting");
 const user_1 = require("../models/user");
 const message_1 = require("../models/message");
 const router = express_1.default.Router();
-router.get("/", (req, res) => {
-    console.log("/message/ route hit");
-    res.json("/message/ route hit with get req");
+router.get("/test", (req, res) => {
+    const { userId } = req.body;
+    console.log("/message/test route hit");
+    if (userId) {
+        res.json(`/message/test route hit with get req with userId: ${userId}`);
+    }
+    else {
+        res.json("/message/test route hit with get req");
+    }
 });
 // Endpoint to update messages
 router.put("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
