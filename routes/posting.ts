@@ -37,18 +37,18 @@ router.get("/search", async (req: Request, res: Response) => {
     }
     if (author_id) {
       try {
-        query.author = new mongoose.Types.ObjectId(String(author_id));
+        mongoose.Types.ObjectId.isValid(String(author_id)); 
         query.author = author_id;
       } catch (error) {
         console.error("Invalid author_id:", error);
         res.status(400).json({ error: "Invalid author_id" });
         return;
       }
+    }
 
-      if (viewAll == "true") {
-        const searchResult = await PostingModel.find(query);
-        return res.json(searchResult);
-      }
+    if (viewAll == "true") {
+      const searchResult = await PostingModel.find(query);
+      return res.status(200).json(searchResult);
     }
 
     const pageNumber = parseInt(page as string) || 1;

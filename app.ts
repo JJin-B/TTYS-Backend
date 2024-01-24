@@ -19,9 +19,9 @@ db.once("open", () => {
   console.log("MongoDB connected successfully");
 });
 
-// // CORS setting for local development
-import cors from "cors";
-app.use(cors({ origin: "http://localhost:5173" }));
+// // // CORS setting for local development
+// import cors from "cors";
+// app.use(cors({ origin: "http://localhost:5173" }));
 
 // Middleware to parse JSON in the request body
 app.use(express.json());
