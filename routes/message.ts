@@ -7,6 +7,16 @@ import { Message, MessageModel } from "../models/message";
 
 const router = express.Router();
 
+router.get("/test", (req: Request, res: Response) => {
+  const { userId } = req.body;
+  console.log("/message/test route hit");
+  if (userId) {
+    res.json(`/message/test route hit with get req with userId: ${userId}`);
+  } else {
+    res.json("/message/test route hit with get req");
+  }
+});
+
 // Endpoint to update messages
 router.put("/", async (req: Request, res: Response) => {
   try {

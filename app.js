@@ -14,13 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
-// import { createProxyServer } from "http-proxy";
-// import LocalStrategy from 'passport-local';
-// import session from 'express-session';
 const posting_1 = __importDefault(require("./routes/posting"));
 const user_1 = __importDefault(require("./routes/user"));
 const message_1 = __importDefault(require("./routes/message"));
-// import cors from "cors";
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3001;
 mongoose_1.default.connect("mongodb://localhost:27017/tradeyourshelfofshame");
@@ -29,24 +25,9 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"));
 db.once("open", () => {
     console.log("MongoDB connected successfully");
 });
-// // Setting for CORS
-// const apiProxy = createProxyServer();
-// const allowedOrigin =
-//   "https://9afnnp3x28.execute-api.us-east-2.amazonaws.com/TTYS"; // AWS API GATEWAY url
-// const corsOptions: cors.CorsOptions = {
-//   origin: allowedOrigin,
-//   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-//   credentials: true,
-// };
-// app.use(cors(corsOptions));
-// // Proxy requests to the actual backend API
-// app.all('/*', (req, res) => {
-//   apiProxy.web(req, res, {
-//     target: 'http://3.145.3.210:3001', // backend API server URL
-//     changeOrigin: true,
-//   });
-// });
-// app.use(cors({ origin: "http://localhost:5173" }));
+// // CORS setting for local development
+const cors_1 = __importDefault(require("cors"));
+app.use((0, cors_1.default)({ origin: "http://localhost:5173" }));
 // Middleware to parse JSON in the request body
 app.use(express_1.default.json());
 app.use("/posting", posting_1.default);
