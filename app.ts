@@ -20,8 +20,8 @@ db.once("open", () => {
 });
 
 // // CORS setting for local development
-import cors from "cors";
-app.use(cors({ origin: "http://localhost:5173" }));
+// import cors from "cors";
+// app.use(cors({ origin: "http://localhost:5173" }));
 
 // Middleware to parse JSON in the request body
 app.use(express.json());
