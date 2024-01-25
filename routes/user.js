@@ -45,7 +45,7 @@ router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function*
             password: userParams.password,
         });
         if (!isValidUser) {
-            return res.json("Not valid User");
+            return res.status(401).json("Not valid User");
         }
         return res.json(isValidUser);
     }

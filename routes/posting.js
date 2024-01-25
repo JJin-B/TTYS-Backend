@@ -46,7 +46,7 @@ router.get("/search", (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
         if (author_id) {
             try {
-                query.author = new mongoose_1.default.Types.ObjectId(String(author_id));
+                mongoose_1.default.Types.ObjectId.isValid(String(author_id));
                 query.author = author_id;
             }
             catch (error) {
@@ -54,10 +54,10 @@ router.get("/search", (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 res.status(400).json({ error: "Invalid author_id" });
                 return;
             }
-            if (viewAll == "true") {
-                const searchResult = yield posting_1.PostingModel.find(query);
-                return res.json(searchResult);
-            }
+        }
+        if (viewAll == "true") {
+            const searchResult = yield posting_1.PostingModel.find(query);
+            return res.status(200).json(searchResult);
         }
         const pageNumber = parseInt(page) || 1;
         const searchResult = yield posting_1.PostingModel.find(query)

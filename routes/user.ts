@@ -39,7 +39,7 @@ router.post("/signin", async (req: Request, res: Response) => {
       password: userParams.password,
     });
     if (!isValidUser) {
-      return res.json("Not valid User");
+      return res.status(401).json("Not valid User");
     }
 
     return res.json(isValidUser);
