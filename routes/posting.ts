@@ -8,7 +8,6 @@ const router = express.Router();
 
 // Endpoint to get the latest 8 postings
 router.get("/latest-postings", async (req: Request, res: Response) => {
-  console.log("latest-posting hit");
   try {
     const latestPostings = await PostingModel.find()
       .sort({ createdAt: -1 })
@@ -37,7 +36,7 @@ router.get("/search", async (req: Request, res: Response) => {
     }
     if (author_id) {
       try {
-        mongoose.Types.ObjectId.isValid(String(author_id)); 
+        mongoose.Types.ObjectId.isValid(String(author_id));
         query.author = author_id;
       } catch (error) {
         console.error("Invalid author_id:", error);

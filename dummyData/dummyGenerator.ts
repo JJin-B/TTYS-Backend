@@ -35,9 +35,8 @@ const seedDB = async (): Promise<void> => {
     email: "intblejin@gmail.com",
     username: "intblejin@gmail.com",
     name: "Jin Bae",
-    password: "abc",
   });
-  await newUser.save();
+  const registeredUser = await UserModel.register(newUser, "abc");
   console.log("User reset done");
 
   console.log("Message Model Reset");

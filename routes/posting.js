@@ -19,7 +19,6 @@ const user_1 = require("../models/user");
 const router = express_1.default.Router();
 // Endpoint to get the latest 8 postings
 router.get("/latest-postings", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("latest-posting hit");
     try {
         const latestPostings = yield posting_1.PostingModel.find()
             .sort({ createdAt: -1 })

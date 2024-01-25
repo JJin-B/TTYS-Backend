@@ -1,9 +1,24 @@
 import express, { Request, Response } from "express";
 
+import passport from "passport";
+import passportLocal from "passport-local";
+const LocalStrategy = passportLocal.Strategy;
+
 import { PostingModel, IPosting } from "../models/posting";
-import { UserModel } from "../models/user";
+import { UserModel, IUser } from "../models/user";
 
 const router = express.Router();
+
+// passport for password hashing
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: "email", // Specify the field used for the username (email in this case)
+      passwordField: "password", // Specify the field used for the password
+    },
+    UserModel.authenticate()
+  )
+);
 
 // Endpoint to register a new user
 router.post("/register", async (req: Request, res: Response) => {
@@ -17,12 +32,13 @@ router.post("/register", async (req: Request, res: Response) => {
 
     userParams.username = userParams.email;
 
-    const user = new UserModel(userParams);
-    console.log(user);
-    const newUser = await user.save();
-    console.log(newUser);
+    const [password, ...newUserParams] = userParams;
 
-    return res.json(newUser);
+    const user = new UserModel(newUserParams);
+
+    const newUser = await UserModel.register(user, password);
+
+    return res.status(200).json(newUser);
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: error });
@@ -30,23 +46,18 @@ router.post("/register", async (req: Request, res: Response) => {
 });
 
 // Endpoint to sign in an user
-router.post("/signin", async (req: Request, res: Response) => {
-  const userParams = req.body;
-
-  try {
-    const isValidUser = await UserModel.findOne({
-      email: userParams.email,
-      password: userParams.password,
-    });
-    if (!isValidUser) {
-      return res.status(401).json("Not valid User");
+router.post("/signin", async (req, res, next) => {
+  passport.authenticate("local", (err: Error, user: IUser, info: any) => {
+    if (err) {
+      return res.status(500).json({ message: "Internal Server Error" });
     }
 
-    return res.json(isValidUser);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error });
-  }
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    const { username, isEmailVerified, ...userInfo } = user;
+    return res.status(200).json({ userInfo });
+  })(req, res, next);
 });
 
 // Endpoint to get user information

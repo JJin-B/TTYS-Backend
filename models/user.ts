@@ -8,7 +8,7 @@ interface UserInterest extends BggData {
 
 interface IUser extends Document {
   name: string;
-  password: string;
+  // password: string; - passport.js will handle the password 
   email: string;
   username: string;
   interests?: UserInterest[];
@@ -25,10 +25,10 @@ const userSchema: Schema = new Schema({
     type: String,
     required: true,
   },
-  password: {
-    type: String,
-    required: true,
-  },
+  // password: {
+  //   type: String,
+  //   required: true,
+  // },
   email: {
     type: String,
     required: true,

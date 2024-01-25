@@ -40,9 +40,8 @@ const seedDB = () => __awaiter(void 0, void 0, void 0, function* () {
         email: "intblejin@gmail.com",
         username: "intblejin@gmail.com",
         name: "Jin Bae",
-        password: "abc",
     });
-    yield newUser.save();
+    const registeredUser = yield user_1.UserModel.register(newUser, "abc");
     console.log("User reset done");
     console.log("Message Model Reset");
     yield message_1.MessageModel.deleteMany({});
