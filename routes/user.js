@@ -44,8 +44,10 @@ router.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, functio
             return res.json("Existing User");
         }
         userParams.username = userParams.email;
-        const [password, ...newUserParams] = userParams;
+        console.log(userParams);
+        const { password } = userParams, newUserParams = __rest(userParams, ["password"]);
         const user = new user_1.UserModel(newUserParams);
+        console.log(user);
         const newUser = yield user_1.UserModel.register(user, password);
         return res.status(200).json(newUser);
     }

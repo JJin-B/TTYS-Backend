@@ -32,9 +32,12 @@ router.post("/register", async (req: Request, res: Response) => {
 
     userParams.username = userParams.email;
 
-    const [password, ...newUserParams] = userParams;
+    console.log(userParams);
+
+    const {password, ...newUserParams} = userParams;
 
     const user = new UserModel(newUserParams);
+    console.log(user);
 
     const newUser = await UserModel.register(user, password);
 

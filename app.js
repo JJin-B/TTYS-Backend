@@ -25,7 +25,7 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"));
 db.once("open", () => {
     console.log("MongoDB connected successfully");
 });
-// // CORS setting for local development
+// CORS setting for local development
 const cors_1 = __importDefault(require("cors"));
 app.use((0, cors_1.default)({ origin: "http://localhost:5173" }));
 // Middleware to parse JSON in the request body
