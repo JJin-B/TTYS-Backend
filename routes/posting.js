@@ -114,7 +114,6 @@ router.post("/new", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 // Endpoint to get posting details based on the posting Id
 router.get("/:postId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { postId } = req.params;
-    console.log(postId);
     try {
         const searchResult = yield posting_1.PostingModel.findById(postId)
             .populate({

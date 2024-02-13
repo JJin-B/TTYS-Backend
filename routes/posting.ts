@@ -113,7 +113,6 @@ router.post("/new", async (req: Request, res: Response) => {
 // Endpoint to get posting details based on the posting Id
 router.get("/:postId", async (req: Request, res: Response) => {
   const { postId } = req.params;
-  console.log(postId);
   try {
     const searchResult = await PostingModel.findById(postId)
       .populate({

@@ -18,16 +18,17 @@ const posting_1 = __importDefault(require("./routes/posting"));
 const user_1 = __importDefault(require("./routes/user"));
 const message_1 = __importDefault(require("./routes/message"));
 const app = (0, express_1.default)();
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 mongoose_1.default.connect("mongodb://localhost:27017/tradeyourshelfofshame");
 const db = mongoose_1.default.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 db.once("open", () => {
     console.log("MongoDB connected successfully");
 });
+const cors_origin = process.env.CORS_Origin || "http://localhost:5173";
 // CORS setting for local development
 const cors_1 = __importDefault(require("cors"));
-app.use((0, cors_1.default)({ origin: "http://localhost:5173" }));
+app.use((0, cors_1.default)({ origin: cors_origin }));
 // Middleware to parse JSON in the request body
 app.use(express_1.default.json());
 app.use("/posting", posting_1.default);

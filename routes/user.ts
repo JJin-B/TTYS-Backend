@@ -32,12 +32,9 @@ router.post("/register", async (req: Request, res: Response) => {
 
     userParams.username = userParams.email;
 
-    console.log(userParams);
-
-    const {password, ...newUserParams} = userParams;
+    const { password, ...newUserParams } = userParams;
 
     const user = new UserModel(newUserParams);
-    console.log(user);
 
     const newUser = await UserModel.register(user, password);
 
@@ -151,6 +148,36 @@ router.patch("/:userId/checkNotification", async (req, res) => {
       return res
         .status(500)
         .json({ error: "Failed to update user notification viewed" });
+    }
+  } catch (error) {
+    console.error("Error finding user!:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.patch("/:userId/verify", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      { $set: { isEmailVerified: true } },
+      { new: true }
+    )
+      .select("name email")
+      .exec();
+
+    if (updatedUser) {
+      return res.json(updatedUser);
+    } else {
+      return res
+        .status(500)
+        .json({ error: "Failed to update user verification" });
     }
   } catch (error) {
     console.error("Error finding user!:", error);

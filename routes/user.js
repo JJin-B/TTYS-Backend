@@ -44,10 +44,8 @@ router.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, functio
             return res.json("Existing User");
         }
         userParams.username = userParams.email;
-        console.log(userParams);
         const { password } = userParams, newUserParams = __rest(userParams, ["password"]);
         const user = new user_1.UserModel(newUserParams);
-        console.log(user);
         const newUser = yield user_1.UserModel.register(user, password);
         return res.status(200).json(newUser);
     }
@@ -140,6 +138,30 @@ router.patch("/:userId/checkNotification", (req, res) => __awaiter(void 0, void 
             return res
                 .status(500)
                 .json({ error: "Failed to update user notification viewed" });
+        }
+    }
+    catch (error) {
+        console.error("Error finding user!:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}));
+router.patch("/:userId/verify", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.params;
+    try {
+        const user = yield user_1.UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        const updatedUser = yield user_1.UserModel.findByIdAndUpdate(userId, { $set: { isEmailVerified: true } }, { new: true })
+            .select("name email")
+            .exec();
+        if (updatedUser) {
+            return res.json(updatedUser);
+        }
+        else {
+            return res
+                .status(500)
+                .json({ error: "Failed to update user verification" });
         }
     }
     catch (error) {

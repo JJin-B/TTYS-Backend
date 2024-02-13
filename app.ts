@@ -5,11 +5,9 @@ import postingRoutes from "./routes/posting";
 import userRoutes from "./routes/user";
 import messageRoutes from "./routes/message";
 
-
-
 const app = express();
 
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 
 mongoose.connect("mongodb://localhost:27017/tradeyourshelfofshame");
 const db = mongoose.connection;
@@ -19,11 +17,11 @@ db.once("open", () => {
   console.log("MongoDB connected successfully");
 });
 
+const cors_origin = process.env.CORS_Origin || "http://localhost:5173";
+
 // CORS setting for local development
 import cors from "cors";
-app.use(cors({ origin: "http://localhost:5173" }));
-
-
+app.use(cors({ origin: cors_origin }));
 
 // Middleware to parse JSON in the request body
 app.use(express.json());
